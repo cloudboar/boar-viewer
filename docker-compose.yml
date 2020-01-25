@@ -1,0 +1,28 @@
+version: '3.4'
+
+services:
+  web.frontend:
+    container_name: web.frontend
+    ports:
+      - "8080:80"
+    image: ${DOCKER_REGISTRY-}webfrontend
+    build:
+      context: .
+      dockerfile: Web.Frontend/Dockerfile
+    depends_on:
+        - api.foodservice
+        - api.boarservice
+
+  api.foodservice:
+    container_name: api.foodservice
+    image: ${DOCKER_REGISTRY-}apifoodservice
+    build:
+      context: .
+      dockerfile: Api.FoodService/Dockerfile
+
+  api.boarservice:
+    container_name: api.boarservice
+    image: ${DOCKER_REGISTRY-}apiboarservice
+    build:
+      context: .
+      dockerfile: Api.BoarService/Dockerfile
