@@ -1,0 +1,52 @@
+parameters:
+- name: name 
+  type: string 
+- name: azureSubscription 
+  type: string 
+- name: resourceGroupName 
+  type: string 
+- name: location 
+  type: string 
+- name: networkParameters 
+  type: object 
+- name: aksParameters 
+  type: object 
+- name: run
+  type: string
+
+stages:
+- stage: ${{ parameters.name }}
+  condition: eq(variables['run'], 'no')
+
+  jobs:
+
+  - job: Cluster_Deployment
+    pool:
+      vmImage: 'windows-latest'
+    steps:
+
+    - pwsh: |
+        Write-Host ${{ parameters.aksParameters }}
+
+    - task: AzureResourceGroupDeployment@2
+      displayName: 'Azure Deployment: Aks Networking'
+      inputs:
+        azureSubscription: ${{ parameters.azureSubscription }}
+        action: 'Create Or Update Resource Group'
+        resourceGroupName: ${{ parameters.resourceGroupName }}
+        location: ${{ parameters.location }}
+        templateLocation: 'Linked artifact'
+        csmFile: Infrastructure/Aks/Templates/vnet_template.json
+        overrideParameters: ${{ parameters.networkParameters }}
+        deploymentMode: 'Incremental'
+
+    - task: AzureResourceGroupDeployment@2
+      displayName: 'Azure Deployment: AKS Cluster Deployment'
+      inputs:
+        azureSubscription: ${{ parameters.azureSubscription }}
+        action: 'Create Or Update Resource Group'
+        resourceGroupName: ${{ parameters.resourceGroupName }}
+        location: ${{ parameters.location }}
+        templateLocation: 'Linked artifact'
+        csmFile: Infrastructure/Aks/Templates/aks_template.json
+        overrideParameters: ${{ parameters.aksParameters }}

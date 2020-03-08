@@ -1,0 +1,163 @@
+# Docker
+# Build a Docker image 
+# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+
+trigger:
+- "*"
+
+resources:
+- repo: self
+
+variables:
+- name: subscription
+  value: 'Bartek-MPN'
+- name: containerRegistry
+  value: 'cloudboaracrmaint'
+- name: run
+  value: 'yes'
+- name: tag
+  value: $(Build.BuildId)
+- ${{ if startsWith(variables['build.SourceBranch'], 'refs/heads/feature') }}:
+  - group: maint
+- ${{ if startsWith(variables['build.SourceBranch'], 'refs/heads/develop') }}:
+  - group: dev
+
+stages:
+
+- stage: Test
+  displayName: Test image
+  condition: eq(variables['run'], 'no')
+  jobs:
+
+  - job: Test
+    displayName: Test
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - pwsh: |
+        write-output "$(envName)"
+        write-output "$(build.SourceBranch)"
+
+- template: Infrastructure/Aks/aksStage.yml #  Aks Cluster Deployment
+  parameters:
+    name: Aks_Cluster_Deployment
+    azureSubscription: '$(subscription)'
+    resourceGroupName: 'cloudboar-$(envName)-rg'
+    location: '$(location)'
+    run: 'no'
+    networkParameters: '-location $(location) 
+                        -vnetAKSName "Vnet_$(envName)_AKS"'
+    aksParameters: '-location $(location) 
+                    -acrName "cloudboaracr$(envName)"
+                    -virtualNetworkName "Vnet_$(envName)_AKS" 
+                    -aksName "cloudboaraks$(envName)" 
+                    -aksNodeCount $(agentMinCount)
+                    -aksMaxNodeCount $(agentMaxCount)               
+                    -envName "$(envName)"
+                    -servicePrincipalClientId "$(akscCientId)"
+                    -servicePrincipalSecret "$(aksSecret)"'
+
+- stage: Build
+  displayName: Build image
+  condition: eq(variables['run'], 'yes')
+  jobs:
+
+  - job: Build
+    displayName: Build
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+
+    - task: replacetokens@3
+      inputs:
+        targetFiles: 'docker-compose.yml'
+        encoding: 'auto'
+        writeBOM: true
+        actionOnMissing: 'warn'
+        keepToken: false
+        tokenPrefix: '/{'
+        tokenSuffix: '}\'
+
+    - pwsh: |
+        cat $(System.DefaultWorkingDirectory)/docker-compose.yml
+
+    - task: DockerCompose@0
+      inputs:
+        azureSubscription: 'Bartek-MPN'
+        containerregistrytype: Container Registry
+        dockerRegistryEndpoint: $(containerRegistry)
+        dockerComposeFile: 'docker-compose.yml'
+        action: 'Build services'
+        projectName: $(Build.Repository.Name)
+        qualifyImageNames: true
+        includeLatestTag: false
+        additionalImageTags: $(tag)
+    - pwsh: |
+        write-output "$(containerRegistry)"
+    - task: DockerCompose@0
+      displayName: Push services
+      inputs:
+        action: Push services
+        azureSubscription: 'Bartek-MPN'
+        containerregistrytype: 'Container Registry'
+        dockerRegistryEndpoint: $(containerRegistry)
+        dockerComposeFile: docker-compose.yml
+        projectName: $(Build.Repository.Name)
+        includeLatestTag: false
+        qualifyImageNames: true
+        additionalImageTags: $(tag)
+
+- stage: Helm_Deploy
+  displayName: Helm
+  condition: eq(variables['run'], 'yes')
+  jobs:
+
+  - job: App_Deploy
+    displayName: App Deploy
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+
+    - task: KubernetesManifest@0
+      displayName: Create imagePullSecret
+      inputs:
+        action: createSecret
+        secretName: 'acrazure'
+        namespace: 'kube-system'
+        dockerRegistryEndpoint: $(containerRegistry)
+        kubernetesServiceConnection: 'cloudboar-aks'
+
+    - task: KubernetesManifest@0
+      displayName: Deploy
+      inputs:
+        kubernetesServiceConnection: 'cloudboar-aks'
+        namespace: 'kube-system'
+        manifests: Infrastructure/Aks/Roles/tiller.yaml
+
+    - task: HelmInstaller@1
+      inputs:
+        helmVersionToInstall: '2.12.2'
+
+    - task: HelmDeploy@0
+      displayName: Helm init
+      inputs:
+        connectionType: 'Kubernetes Service Connection'
+        kubernetesServiceConnection: 'cloudboar-aks'
+        command: init
+        upgradetiller: true
+        waitForExecution: true
+        arguments: --service-account tiller
+
+    - task: HelmDeploy@0
+      inputs:
+        connectionType: 'Kubernetes Service Connection'
+        kubernetesServiceConnection: 'cloudboar-aks'
+        namespace: 'cloudboar'
+        command: 'upgrade'
+        chartType: 'FilePath'
+        chartPath: 'Kubernetes/boar-viewer'
+        releaseName: 'cloudboar-app'
+        overrideValues: 'global.image.tag=$(tag),global.image.repository=$(containerRegistry).azurecr.io'
+        valueFile: 'Kubernetes/boar-viewer/values.yaml'
+        force: true
+        waitForExecution: false
