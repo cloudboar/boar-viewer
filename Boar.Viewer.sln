@@ -3,13 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29709.97
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Web.Frontend", "Web.Frontend\Web.Frontend.csproj", "{3D2A47D1-AB24-4C94-BCBB-739EA3828527}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Web.Frontend", "Web.Frontend\Web.Frontend.csproj", "{3D2A47D1-AB24-4C94-BCBB-739EA3828527}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Api.BoarService", "Api.BoarService\Api.BoarService.csproj", "{6E62D4F4-B88F-422B-95A0-3489ACD70E70}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Api.BoarService", "Api.BoarService\Api.BoarService.csproj", "{6E62D4F4-B88F-422B-95A0-3489ACD70E70}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Api.FoodService", "Api.FoodService\Api.FoodService.csproj", "{251D35D8-31F9-4659-A531-775C80B2B497}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Api.FoodService", "Api.FoodService\Api.FoodService.csproj", "{251D35D8-31F9-4659-A531-775C80B2B497}"
 EndProject
 Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{C72C8037-4CF9-4367-849F-7D425A445102}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Boar.Viewer.Tests", "Boar.Viewer.Tests\Boar.Viewer.Tests.csproj", "{EC39A703-2B7D-4BC9-AA9B-0EE0E79C7487}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{C72C8037-4CF9-4367-849F-7D425A445102}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C72C8037-4CF9-4367-849F-7D425A445102}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C72C8037-4CF9-4367-849F-7D425A445102}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EC39A703-2B7D-4BC9-AA9B-0EE0E79C7487}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EC39A703-2B7D-4BC9-AA9B-0EE0E79C7487}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EC39A703-2B7D-4BC9-AA9B-0EE0E79C7487}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EC39A703-2B7D-4BC9-AA9B-0EE0E79C7487}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
