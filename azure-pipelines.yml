@@ -62,6 +62,17 @@ stages:
   condition: eq(variables['run'], 'yes')
   jobs:
 
+  - job: Test
+    displayName: Api-Nunit
+    pool:
+      vmImage: 'windows-latest'
+    steps:
+    - task: DotNetCoreCLI@2
+      inputs:
+        command: 'test'
+        projects: 'Boar.Viewer.Tests/Boar.Viewer.Tests.csproj'
+        testRunTitle: 'api-unit-test'
+
   - job: Build
     displayName: Build
     pool:
